@@ -60,6 +60,6 @@
   },
   "prettier": "office-addin-prettier-config",
   "browserslist": [
-    "ie 11"
+    "defaults"
   ]
 }

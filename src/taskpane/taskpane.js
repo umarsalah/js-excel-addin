@@ -26,13 +26,35 @@ function readBigCSVfile(fileUploaded) {
     var reader = new FileReader();
     reader.readAsBinaryString(chunk);
 
-    reader.onload = function (evt) {
+    reader.onload = async function (evt) {
       if (evt.target.readyState == FileReader.DONE) {
         var data = evt.target.result;
-        console.log("data", data);
-        var workbook = xlsx.read(data, { type: "binary" });
-        // console.log("workbook", workbook);
-        console.log("workbook.SheetNames", workbook.SheetNames);
+        const workbook = xlsx.read(data, { type: "binary" });
+
+        // get the first column of the workbook and append it to a new file
+        const firstSheet = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheet];
+        const columnData = xlsx.utils.sheet_to_json(worksheet, {
+          header: 1,
+        });
+
+        // get first column data in json
+        const firstColumnData = columnData.map((row) => row[0]);
+
+        // insert data to new excel file
+        await Excel.run(async (context) => {
+          const sheet = context.workbook.worksheets.getActiveWorksheet();
+          // clear old sheet cells data
+          sheet.getUsedRange().clear();
+          // set header of column firstColumnData[0]
+          sheet.getRangeByIndexes(0, 0, 1, 1).values = [[firstColumnData[0]]];
+          // set data of column firstColumnData.slice(1)
+          firstColumnData.slice(1).forEach((value, index) => {
+            sheet.getRangeByIndexes(index + 1, 0, 1, 1).values = [[value]];
+          });
+         
+          await context.sync();
+        });
       }
     };
 
@@ -47,27 +69,9 @@ async function processSheets() {
       console.log("processing");
       // get uploaded file
       const fileSelector = document.getElementById("fileUpload").files[0];
-      console.log("fileSelector", fileSelector);
+      await readBigCSVfile(fileSelector);
 
-      readBigCSVfile(fileSelector);
-
-      // get current sheet values and store it in primaryValues array of objects
-      const sheet = context.workbook.worksheets.getActiveWorksheet();
-      const range = sheet.getUsedRange();
-      console.log("range", range);
-      range.load("values");
       await context.sync();
-      const primaryValues = range.values;
-
-      // get uploaded sheet values and store it in secondaryValues array of objects
-      const secondarySheet = context.workbook.worksheets.getItem("Sheet2");
-      const secondaryRange = secondarySheet.getUsedRange();
-      secondaryRange.load("values");
-      await context.sync();
-      const secondaryValues = secondaryRange.values;
-
-      console.log("primaryValues", primaryValues);
-      console.log("secondaryValues", secondaryValues);
     });
   } catch (error) {
     console.error(error);
