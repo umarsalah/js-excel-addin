@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Contoso Task Pane Add-in</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1.1/hosted/office.js"></script>
+
+    <!-- For more information on Fluent UI, visit https://developer.microsoft.com/fluentui#/. -->
+    <link rel="stylesheet" href="https://static2.sharepointonline.com/files/fabric/office-ui-fabric-core/11.0.0/css/fabric.min.css"/>
+
+    <!-- Template styles -->
+    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="ms-font-m ms-welcome ms-Fabric">
+    <header class="ms-welcome__header ms-bgColor-neutralLighter">
+        <h1 class="ms-font-su">Welcome to Insurtic</h1>
+    </header>
+    <!--
+        Add one file input to upload the file and one file input to upload sheet
+    -->
+    <div class="ms-welcome__main">
+        <div class="ms-welcome">
+        <div class="ms-welcome__features">
+            <div class="ms-welcome__feature">
+                <div class="ms-welcome">
+                    <i class="ms-Icon ms"></i>
+                    <h2 class="ms-font-xl"></h2>
+                    <p class="ms-font-m">Upload the sheet to be processed</p>
+                </div>
+                <div class="ms-welcome">
+                    <input type="file" title="file" id="fileUpload" accept=".xlsx, .xls .csv" />
+                </div>
+            </div>
+        </div>
+    </div>
+    <footer class="ms-welcome__footer ms-bgColor-neutralLighter">
+        <button class="ms-welcome__action" id="run">Run</button>
+    </footer>
+
+    <script src="./taskpane.js"></script>
+
+</body>
+
+</html>
