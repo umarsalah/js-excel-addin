@@ -55,6 +55,13 @@ function readBigCSVfile(fileUploaded) {
         var encodedUri = encodeURI(csvContent);
         console.log("encodedUri", encodedUri);
 
+        var link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "my_data.csv");
+        document.body.appendChild(link); // Required for FF
+
+        link.click(); // This will download the data file named "my_data.csv".
+
         // insert data to the running excel file
         await Excel.run(async (context) => {
           const sheet = context.workbook.worksheets.getActiveWorksheet();
