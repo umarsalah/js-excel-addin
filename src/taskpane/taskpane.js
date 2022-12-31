@@ -37,10 +37,24 @@ function readBigCSVfile(fileUploaded) {
           header: 1,
         });
 
+        console.log('columns names',columnData[0]);
+
         // get first column data in json
         const firstColumnData = columnData.map((row) => row[0]);
         console.log("firstColumnData", firstColumnData);
-        
+
+        // new csv file
+        let csvContent = "data:text/csv;charset=utf-8," + firstColumnData.join(",");
+
+        // insert new line after every comma
+        csvContent = csvContent.replace(/,/g, ",\n");
+
+        console.log("csvContent", csvContent);
+
+        // create a link to download the file
+        var encodedUri = encodeURI(csvContent);
+        console.log("encodedUri", encodedUri);
+
         // insert data to the running excel file
         await Excel.run(async (context) => {
           const sheet = context.workbook.worksheets.getActiveWorksheet();
