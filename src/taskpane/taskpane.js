@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import * as xlsx from "xlsx";
 
 Office.onReady((info) => {
@@ -20,7 +19,7 @@ function readBigCSVfile(fileUploaded) {
   var start = 0;
   var end = chunkSize;
 
-  while (start < file.size) {
+  while (start < chunkSize) {
     var chunk = file.slice(start, end);
 
     var reader = new FileReader();
@@ -40,19 +39,22 @@ function readBigCSVfile(fileUploaded) {
 
         // get first column data in json
         const firstColumnData = columnData.map((row) => row[0]);
-
-        // insert data to new excel file
+        console.log("firstColumnData", firstColumnData);
+        
+        // insert data to the running excel file
         await Excel.run(async (context) => {
           const sheet = context.workbook.worksheets.getActiveWorksheet();
           // clear old sheet cells data
           sheet.getUsedRange().clear();
           // set header of column firstColumnData[0]
           sheet.getRangeByIndexes(0, 0, 1, 1).values = [[firstColumnData[0]]];
+
           // set data of column firstColumnData.slice(1)
+          console.log("Data length", firstColumnData.slice(1).length);
           firstColumnData.slice(1).forEach((value, index) => {
             sheet.getRangeByIndexes(index + 1, 0, 1, 1).values = [[value]];
           });
-         
+
           await context.sync();
         });
       }
