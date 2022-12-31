@@ -19,7 +19,7 @@ function readBigCSVfile(fileUploaded) {
   var start = 0;
   var end = chunkSize;
 
-  while (start < chunkSize) {
+  while (start < end) {
     var chunk = file.slice(start, end);
 
     var reader = new FileReader();
