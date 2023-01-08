@@ -83,6 +83,11 @@ module.exports = async (env, options) => {
         template: "./src/commands/commands.html",
         chunks: ["polyfill", "commands"],
       }),
+      new HtmlWebpackPlugin({
+        filename: "error.html",
+        template: "./src/taskpane/error.html",
+        chunks: ["polyfill", "commands"],
+      }),
     ],
     devServer: {
       headers: {

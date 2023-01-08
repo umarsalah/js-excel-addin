@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8" />
@@ -31,16 +31,17 @@
                 <div class="ms-welcome">
                     <i class="ms-Icon ms"></i>
                     <h2 class="ms-font-xl"></h2>
-                    <p class="ms-font-m">Upload the sheet to be processed</p>
+                    <p class="ms-font-m">Upload the Two Sheets to be processed</p>
                 </div>
                 <div class="ms-welcome">
-                    <input type="file" title="file" id="fileUpload" accept=".xlsx, .xls .csv" />
+                    <input type="file" title="file" id="primaryFile" accept=".xlsx, .xls .csv" />
+                    <input type="file" title="file" id="secondaryFile" accept=".xlsx, .xls .csv" />
                 </div>
             </div>
         </div>
     </div>
     <footer class="ms-welcome__footer ms-bgColor-neutralLighter">
-        <button class="ms-welcome__action" id="run">Run</button>
+        <button class="ms-welcome__action" id="run">Compare</button>
     </footer>
 
     <script src="./taskpane.js"></script>

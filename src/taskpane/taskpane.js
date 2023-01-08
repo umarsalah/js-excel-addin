@@ -8,95 +8,99 @@ Office.onReady((info) => {
   }
 });
 
-function readBigCSVfile(fileUploaded) {
-  console.log("reading big csv file ....");
-
-  // read big csv file size with chunks
-  var chunkSize = 1024 * 1024;
-
-  var file = fileUploaded;
-
-  var start = 0;
-  var end = chunkSize;
-
-  while (start < end) {
-    var chunk = file.slice(start, end);
-
-    var reader = new FileReader();
-    reader.readAsBinaryString(chunk);
-
-    reader.onload = async function (evt) {
-      if (evt.target.readyState == FileReader.DONE) {
-        var data = evt.target.result;
-        const workbook = xlsx.read(data, { type: "binary" });
-
-        // get the first column of the workbook and append it to a new file
-        const firstSheet = workbook.SheetNames[0];
-        const worksheet = workbook.Sheets[firstSheet];
-        const columnData = xlsx.utils.sheet_to_json(worksheet, {
-          header: 1,
-        });
-
-        console.log('columns names',columnData[0]);
-
-        // get first column data in json
-        const firstColumnData = columnData.map((row) => row[0]);
-        console.log("firstColumnData", firstColumnData);
-
-        // new csv file
-        let csvContent = "data:text/csv;charset=utf-8," + firstColumnData.join(",");
-
-        // insert new line after every comma
-        csvContent = csvContent.replace(/,/g, ",\n");
-
-        console.log("csvContent", csvContent);
-
-        // create a link to download the file
-        var encodedUri = encodeURI(csvContent);
-        console.log("encodedUri", encodedUri);
-
-        var link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", "my_data.csv");
-        document.body.appendChild(link); // Required for FF
-
-        link.click(); // This will download the data file named "my_data.csv".
-
-        // insert data to the running excel file
-        await Excel.run(async (context) => {
-          const sheet = context.workbook.worksheets.getActiveWorksheet();
-          // clear old sheet cells data
-          sheet.getUsedRange().clear();
-          // set header of column firstColumnData[0]
-          sheet.getRangeByIndexes(0, 0, 1, 1).values = [[firstColumnData[0]]];
-
-          // set data of column firstColumnData.slice(1)
-          console.log("Data length", firstColumnData.slice(1).length);
-          firstColumnData.slice(1).forEach((value, index) => {
-            sheet.getRangeByIndexes(index + 1, 0, 1, 1).values = [[value]];
-          });
-
-          await context.sync();
-        });
-      }
-    };
-
-    start += chunkSize;
-    end = Math.min(end + chunkSize, file.size);
-  }
-}
-
 async function processSheets() {
   try {
     await Excel.run(async (context) => {
       console.log("processing");
-      // get uploaded file
-      const fileSelector = document.getElementById("fileUpload").files[0];
-      await readBigCSVfile(fileSelector);
+      // get uploaded files
+      const primaryFile = document.getElementById("primaryFile").files[0];
+      const secondaryFile = document.getElementById("secondaryFile").files[0];
+
+      // Return error if no 2 files uploaded
+      if (!primaryFile && !secondaryFile) {
+        return context
+          .sync()
+          .then(function () {
+            Office.context.ui.displayDialogAsync(
+              "https://localhost:3000/error.html",
+              { height: 30, width: 20 },
+              function (result) {
+                var dialog = result.value;
+                dialog.addEventHandler(Office.EventType.DialogMessageReceived, function (event) {
+                  console.log(event.message);
+                  dialog.close();
+                });
+              }
+            );
+          })
+          .catch(function (error) {
+            console.log("Error: " + error);
+            if (error instanceof OfficeExtension.Error) {
+              console.log("Debug info: " + JSON.stringify(error.debugInfo));
+            }
+          });
+      }
+
+      // Compare two files columns and rows
+      const primaryFileData = await readCSVfile(primaryFile);
+      const secondaryFileData = await readCSVfile(secondaryFile);
+      
+      // fill sheets with data
+      await fillSheetsWithData(primaryFileData, secondaryFileData, context);
 
       await context.sync();
     });
   } catch (error) {
     console.error(error);
+  }
+
+  async function readCSVfile(fileUploaded) {
+    const dataObject = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const data = e.target.result;
+        const workbook = xlsx.read(data, { type: "binary" });
+        const firstSheetName = workbook.SheetNames[0];
+        const worksheet = workbook.Sheets[firstSheetName];
+        const json = xlsx.utils.sheet_to_json(worksheet, { header: 1 });
+        const dataObject = {};
+        json.forEach((row) => {
+          dataObject[row[0]] = row;
+        });
+        resolve(dataObject);
+      };
+      reader.onerror = (error) => reject(error);
+      reader.readAsBinaryString(fileUploaded);
+    });
+    return dataObject;
+  }
+
+  async function fillSheetsWithData(primaryFileData, secondaryFileData, context) {
+    // We will get the Primary Worksheet and fill it with primaryFileData and the same for secondaryFileData
+    const primarySheet = context.workbook.worksheets.add("Primary Worksheet");
+    const secondarySheet = context.workbook.worksheets.add("Secondary Worksheet");
+
+    /******************************************** Primary Worksheet ***********************************************/
+    const primaryHeaderRow = primaryFileData[Object.keys(primaryFileData)[Object.keys(primaryFileData).length - 1]];
+    const primaryHeaderRange = primarySheet.getRangeByIndexes(0, 0, 1, primaryHeaderRow.length);
+    primaryHeaderRange.values = [primaryHeaderRow];
+    const primaryRows = Object.keys(primaryFileData).map((key) => primaryFileData[key]);
+    primaryRows.pop();
+    primaryRows.forEach((row) => {
+      primarySheet.getRangeByIndexes(primaryRows.indexOf(row) + 1, 0, 1, row.length).values = [row];
+    });
+
+    /******************************************** Secondary Worksheet ********************************************/
+    const secondaryHeaderRow =
+      secondaryFileData[Object.keys(secondaryFileData)[Object.keys(secondaryFileData).length - 1]];
+    const secondaryHeaderRange = secondarySheet.getRangeByIndexes(0, 0, 1, secondaryHeaderRow.length);
+    secondaryHeaderRange.values = [secondaryHeaderRow];
+    const secondaryRows = Object.keys(secondaryFileData).map((key) => secondaryFileData[key]);
+    secondaryRows.pop();
+    secondaryRows.forEach((row) => {
+      secondarySheet.getRangeByIndexes(secondaryRows.indexOf(row) + 1, 0, 1, row.length).values = [row];
+    });
+
+    await context.sync();
   }
 }
